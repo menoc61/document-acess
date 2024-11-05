@@ -1,5 +1,4 @@
 import { Metadata } from "next";
-import Image from "next/image";
 import { UserNav } from "@/components/user-nav";
 import { z } from "zod";
 import { DataTable } from "@/components/DataTable";
@@ -80,26 +79,10 @@ export default async function DashboardPage() {
 
   return (
     <>
-      <div className="md:hidden">
-        <Image
-          src="/logo.png"
-          width={1280}
-          height={998}
-          alt="Playground"
-          className="block dark:hidden"
-        />
-        <Image
-          src="/logo.png"
-          width={1280}
-          height={998}
-          alt="Playground"
-          className="hidden dark:block"
-        />
-      </div>
-      <div className="hidden h-full flex-1 flex-col space-y-8 p-8 md:flex">
+      <div className="flex flex-col space-y-8 p-4 md:p-8">
         <div className="flex items-center justify-between space-y-2">
           <div>
-            <h2 className="text-2xl font-bold tracking-tight">Welcome back!</h2>
+            <h2 className="text-xl md:text-2xl font-bold tracking-tight">Welcome back!</h2>
             <p className="text-muted-foreground">
               Here&apos;s a list of your tasks for this month!
             </p>
@@ -108,7 +91,7 @@ export default async function DashboardPage() {
             <UserNav />
           </div>
         </div>
-        <h1 className="text-2xl font-bold">Credential Dashboard</h1>
+        <h1 className="text-xl md:text-2xl font-bold">Credential Dashboard</h1>
         <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
           <div className="p-4 border rounded-lg shadow-md flex items-center">
             <User className="text-2xl mr-2" />

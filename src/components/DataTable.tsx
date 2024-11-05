@@ -98,7 +98,7 @@ export function DataTable({ data }: { data: ICredential[] }) {
   });
 
   return (
-    <div className="w-full">
+    <div className="w-full overflow-x-auto">
       <div className="flex items-center py-4">
         <Input
           placeholder="Filter emails..."
@@ -106,7 +106,7 @@ export function DataTable({ data }: { data: ICredential[] }) {
           onChange={(event) =>
             table.getColumn("email")?.setFilterValue(event.target.value)
           }
-          className="max-w-sm"
+          className="max-w-sm w-full"
         />
       </div>
       <div className="rounded-md border">
@@ -115,7 +115,7 @@ export function DataTable({ data }: { data: ICredential[] }) {
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id}>
+                  <TableHead key={header.id} className="text-sm">
                     {header.isPlaceholder
                       ? null
                       : flexRender(
@@ -135,7 +135,7 @@ export function DataTable({ data }: { data: ICredential[] }) {
                   data-state={row.getIsSelected() && "selected"}
                 >
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
+                    <TableCell key={cell.id} className="text-sm">
                       {flexRender(
                         cell.column.columnDef.cell,
                         cell.getContext()
@@ -157,12 +157,13 @@ export function DataTable({ data }: { data: ICredential[] }) {
           </TableBody>
         </Table>
       </div>
-      <div className="flex items-center justify-end space-x-2 py-4">
+      <div className="flex items-center justify-between space-x-2 py-4">
         <Button
           variant="outline"
           size="sm"
           onClick={() => table.previousPage()}
           disabled={!table.getCanPreviousPage()}
+          className="flex-1"
         >
           Previous
         </Button>
@@ -171,6 +172,7 @@ export function DataTable({ data }: { data: ICredential[] }) {
           size="sm"
           onClick={() => table.nextPage()}
           disabled={!table.getCanNextPage()}
+          className="flex-1"
         >
           Next
         </Button>
