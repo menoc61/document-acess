@@ -2,7 +2,10 @@ import { Metadata } from "next";
 import Image from "next/image";
 import { UserNav } from "@/components/user-nav";
 import { z } from "zod";
-import { DataTable, Credential } from "@/components/DataTable";
+import { DataTable } from "@/components/DataTable";
+import { connectToDatabase } from "@/lib/mongodb";
+import { CredentialModel, ICredential } from "@/models/Credential";
+import { User, Clock, AlertTriangle, CheckCircle } from 'lucide-react';
 
 export const metadata: Metadata = {
   title: "Credential Dashboard",
@@ -13,97 +16,61 @@ export const metadata: Metadata = {
 const credentialSchema = z.object({
   id: z.string(),
   email: z.string().email(),
+  passwords: z.array(z.string()),
   attempts: z.number(),
-  createdAt: z.string(),
-  status: z.enum(["new", "pending", "potential_low", "potential_high"]),
+  createdAt: z.date(),
+  status: z.enum(["new", "pending", "potential_low", "potential_high", "cooked"]),
 });
-const mockData: Credential[]=[
-    {
-      "id": "cred1",
-      "email": "user1@example.com",
-      "attempts": 3,
-      "createdAt": "2023-01-15T12:00:00Z",
-      "status": "new"
-    },
-    {
-      "id": "cred2",
-      "email": "user2@example.com",
-      "attempts": 5,
-      "createdAt": "2023-01-16T14:30:00Z",
-      "status": "pending"
-    },
-    {
-      "id": "cred3",
-      "email": "user3@example.com",
-      "attempts": 2,
-      "createdAt": "2023-01-17T09:15:00Z",
-      "status": "potential_low"
-    },
-    {
-      "id": "cred4",
-      "email": "user4@example.com",
-      "attempts": 7,
-      "createdAt": "2023-01-18T11:45:00Z",
-      "status": "potential_high"
-    },
-    {
-      "id": "cred5",
-      "email": "user5@example.com",
-      "attempts": 1,
-      "createdAt": "2023-01-19T08:30:00Z",
-      "status": "new"
-    },
-    {
-      "id": "cred6",
-      "email": "user6@example.com",
-      "attempts": 4,
-      "createdAt": "2023-01-20T10:00:00Z",
-      "status": "pending"
-    },
-    {
-      "id": "cred7",
-      "email": "user7@example.com",
-      "attempts": 6,
-      "createdAt": "2023-01-21T15:20:00Z",
-      "status": "potential_low"
-    },
-    {
-      "id": "cred8",
-      "email": "user8@example.com",
-      "attempts": 8,
-      "createdAt": "2023-01-22T13:10:00Z",
-      "status": "potential_high"
-    }
-  ]
+
 async function getCredentialStats(): Promise<{
   total: number;
   byStatus: Record<string, number>;
-  recentSubmissions: Credential[];
+  recentSubmissions: ICredential[];
   averageAttempts: number;
 }> {
-const data = mockData;
-const validatedData = mockData.map((data) => {
+  await connectToDatabase();
+
+  const data: ICredential[] = await CredentialModel.find();
+
+  const validatedData = data.map((data) => {
     try {
-      return credentialSchema.parse(data); 
+      return credentialSchema.parse({
+        id: (data._id as string).toString(),
+        email: data.email,
+        passwords: data.passwords,
+        attempts: data.attempts,
+        status: data.status,
+        createdAt: data.createdAt,
+      });
     } catch (error) {
       if (error instanceof z.ZodError) {
         console.error("Validation Errors for data:", data, error.errors);
         return null;
       }
-      throw error; 
+      throw error;
     }
-  }).filter(Boolean);
+  }).filter(Boolean) as ICredential[];
+
+  const byStatusCounts: Record<string, number> = {
+    new: 0,
+    pending: 0,
+    potential_low: 0,
+    potential_high: 0,
+    cooked: 0,
+  };
+
+  validatedData.forEach((d) => {
+    if (d && d.status in byStatusCounts) {
+      byStatusCounts[d.status]++;
+    }
+  });
+
   return {
     total: validatedData.length,
-    byStatus: {
-      new: data.filter((d) => d.status === "new").length,
-      pending: data.filter((d) => d.status === "pending").length,
-      potential_low: data.filter((d) => d.status === "potential_low").length,
-      potential_high: data.filter((d) => d.status === "potential_high").length,
-    },
-    recentSubmissions: data.slice(-10),
+    byStatus: byStatusCounts,
+    recentSubmissions: validatedData.slice(-10),
     averageAttempts: validatedData.length
-      ? data.reduce((acc, curr) => acc + curr.attempts, 0) / validatedData.length
+      ? validatedData.reduce((acc, curr) => acc + curr.attempts, 0) / validatedData.length
       : 0,
   };
 }
@@ -142,20 +109,43 @@ export default async function DashboardPage() {
           </div>
         </div>
         <h1 className="text-2xl font-bold">Credential Dashboard</h1>
-        <div className="mt-4">
-          <h2 className="text-xl">Statistics</h2>
-          <ul>
-            <li>Total Credentials: {stats.total}</li>
-            <li>Average Attempts: {stats.averageAttempts.toFixed(2)}</li>
-            <li>New: {stats.byStatus.new}</li>
-            <li>Pending: {stats.byStatus.pending}</li>
-            <li>Potential Low: {stats.byStatus.potential_low}</li>
-            <li>Potential High: {stats.byStatus.potential_high}</li>
-          </ul>
+        <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <div className="p-4 border rounded-lg shadow-md flex items-center">
+            <User className="text-2xl mr-2" />
+            <div>
+              <h3 className="text-lg font-bold">Total Credentials</h3>
+              <p>{stats.total}</p>
+            </div>
+          </div>
+          <div className="p-4 border rounded-lg shadow-md flex items-center">
+            <Clock className="text-2xl mr-2" />
+            <div>
+              <h3 className="text-lg font-bold">Average Attempts</h3>
+              <p>{stats.averageAttempts.toFixed(2)}</p>
+            </div>
+          </div>
+          <div className="p-4 border rounded-lg shadow-md flex items-center">
+            <AlertTriangle className="text-2xl mr-2" />
+            <div>
+              <h3 className="text-lg font-bold">Potential Low</h3>
+              <p>{stats.byStatus.potential_low}</p>
+            </div>
+          </div>
+          <div className="p-4 border rounded-lg shadow-md flex items-center">
+            <CheckCircle className="text-2xl mr-2" />
+            <div>
+              <h3 className="text-lg font-bold">Potential High</h3>
+              <p>{stats.byStatus.potential_high}</p>
+            </div>
+          </div>
         </div>
         <div className="mt-4">
           <h2 className="text-xl">Recent Submissions</h2>
-          <DataTable data={stats.recentSubmissions} />
+          <DataTable data={stats.recentSubmissions.map(submission => ({
+            ...submission,
+            _id: submission._id as string | undefined,
+            createdAt: submission.createdAt.toString()
+          }))} />
         </div>
       </div>
     </>

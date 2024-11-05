@@ -229,13 +229,7 @@ export default function Component() {
       <footer className="mt-8 text-center space-y-4">
         <p className="text-sm text-gray-600">© Notaires France 2024</p>
         <div className="flex items-center justify-center gap-6">
-          <Image
-            src="/footer.png"
-            alt="Paris 2024"
-            width={100}
-            height={100}
-            className="h-10 w-auto"
-          />
+
         </div>
       </footer>
     </div>

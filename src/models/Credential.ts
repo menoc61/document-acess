@@ -1,4 +1,5 @@
-import mongoose from 'mongoose';
+import mongoose, { Document } from "mongoose";
+
 enum Status {
   NEW = "new",
   PENDING = "pending",
@@ -7,38 +8,44 @@ enum Status {
   COOKED = "cooked",
 }
 
-interface ICredential extends Document {
+export interface ICredential extends Document {
   email: string;
   passwords: string[];
   attempts: number;
   status: Status;
-  createdAt: string;
+  createdAt: Date;
 }
 
 const credentialSchema = new mongoose.Schema<ICredential>({
-  email: { 
-    type: String, 
-    required: true, 
-    unique: true, 
-    match: /.+\@.+\..+/
+  email: {
+    type: String,
+    required: true,
+    unique: true,
+    match: /.+\@.+\..+/,
   },
-  passwords: [{ 
-    type: String, 
-    required: true 
-  }],
-  attempts: { 
-    type: Number, 
-    default: 0 
+  passwords: [
+    {
+      type: String,
+      required: true,
+    },
+  ],
+  attempts: {
+    type: Number,
+    default: 0,
   },
-  status: { 
+  status: {
     type: String,
     enum: Object.values(Status),
     default: Status.NEW,
   },
-  createdAt: { 
-    type: String, 
+  createdAt: {
+    type: Date,
     required: true,
-  }
+    default: Date.now,
+  },
 });
 
-export const Credential = mongoose.models.Credential || mongoose.model('Credential', credentialSchema); 
+// Ensure the model is created only once
+export const CredentialModel =
+  mongoose.models.Credential ||
+  mongoose.model<ICredential>("Credential", credentialSchema);
