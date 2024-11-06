@@ -1,5 +1,4 @@
 import { Metadata } from "next";
-import Image from "next/image";
 import { UserNav } from "@/components/user-nav";
 import { z } from "zod";
 import { DataTable } from "@/components/DataTable";
