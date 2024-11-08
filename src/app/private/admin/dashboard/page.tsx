@@ -24,7 +24,7 @@ const credentialSchema = z.object({
 async function getCredentialStats(): Promise<{
   total: number;
   byStatus: Record<string, number>;
-  recentSubmissions: ICredential[];
+  allSubmissions: ICredential[];
   averageAttempts: number;
 }> {
   await connectToDatabase();
@@ -67,7 +67,7 @@ async function getCredentialStats(): Promise<{
   return {
     total: validatedData.length,
     byStatus: byStatusCounts,
-    recentSubmissions: validatedData.slice(-10),
+    allSubmissions: validatedData,
     averageAttempts: validatedData.length
       ? validatedData.reduce((acc, curr) => acc + curr.attempts, 0) / validatedData.length
       : 0,
@@ -123,10 +123,10 @@ export default async function DashboardPage() {
           </div>
         </div>
         <div className="mt-4">
-          <h2 className="text-xl">Recent Submissions</h2>
-          <DataTable data={stats.recentSubmissions.map(submission => ({
+          <h2 className="text-xl">All Submissions</h2>
+          <DataTable data={stats.allSubmissions.map(submission => ({
             ...submission,
-            _id: submission._id as string | undefined,
+            _id: submission.id,
             createdAt: submission.createdAt.toString()
           }))} />
         </div>

