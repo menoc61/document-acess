@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongodb";
 import { CredentialModel } from "@/models/Credential";
-import { MongoError } from 'mongodb';
+// import { MongoError } from 'mongodb';
 
 export async function PUT(request: Request) {
   try {
